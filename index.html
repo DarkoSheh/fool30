@@ -289,8 +289,6 @@
   <h2>Полная партия с нейросетью (2 игрока)</h2>
   <p>Кто первый сбросит карты — тот выиграл!</p>
   <p>Текущий ход: <span id="current-turn"></span></p>
-
-  <!-- Лог. Делам зелёный фон у лога: class="green-log" -->
   <div id="aifull-log" class="green-log"></div>
   <hr>
   <p><strong>Ваши карты:</strong></p>
@@ -453,7 +451,6 @@ def ai_attack():
     allow_user_click=True
 
 def update_aifull_ui():
-    # Лог
     aifull_log_div = document["aifull-log"]
     aifull_log_div.innerHTML="<pre>"+"\n".join(log_lines)+"</pre>"
 
@@ -471,7 +468,6 @@ def update_aifull_ui():
         li.bind("click", on_click)
         ul.appendChild(li)
 
-    # Проверка конца
     if len(AI_cards)==0:
         log_lines.append("AI сбросил все карты — AI выиграл!")
         aifull_log_div.innerHTML="<pre>"+"\n".join(log_lines)+"</pre>"
@@ -483,8 +479,10 @@ def update_aifull_ui():
 
 def handle_card_click(idx):
     global deck, AI_cards, user_cards, trump_suit, current_attacker, log_lines, allow_user_click
-    if not allow_user_click:return
-    if idx<0 or idx>=len(user_cards):return
+    if not allow_user_click:
+        return
+    if idx<0 or idx>=len(user_cards):
+        return
 
     c=user_cards[idx]
     if current_attacker=="AI":
@@ -513,7 +511,6 @@ def handle_card_click(idx):
             log_lines.append("Теперь ваш ход, атакуйте.")
         update_aifull_ui()
     else:
-        # current_attacker=="USER"
         log_lines.append(f"Вы атакуете {c}...")
         user_cards.pop(idx)
         def_idx=None
@@ -570,7 +567,6 @@ def start_aifull_multi_game(only_6plus, with_jokers, total_players):
 
     suits=["♠","♥","♦","♣","⭐","🌙","⚜"]
     trump_multi=random.choice(suits)
-    # Отобразить козырь
     document["trump-card"].innerHTML = f"<div style='font-size:1.5rem;'>{trump_multi}</div>"
 
     cur_attacker=1
@@ -598,7 +594,6 @@ def update_aifull_multi_ui():
         li.bind("click", on_click)
         ul.appendChild(li)
 
-    # проверяем конец
     for i in range(n_players):
         if len(hands[i])==0:
             if i==0:
@@ -610,7 +605,7 @@ def update_aifull_multi_ui():
             return
 
 def handle_multi_card_click(idx):
-    global allow_click_multi,hands,cur_attacker,deck_multi,log_multi,trump_multi
+    global allow_click_multi,hands,cur_attacker,deck_multi,log_multi,trump_multi,n_players
     if not allow_click_multi:return
     if idx<0 or idx>=len(hands[0]):return
 
@@ -618,7 +613,6 @@ def handle_multi_card_click(idx):
     defender=(cur_attacker+1)%n_players
 
     if cur_attacker==0:
-        # Вы атакуете
         log_multi.append(f"Вы атакуете {selected_card}...")
         hands[0].pop(idx)
         def_card=None
@@ -641,7 +635,6 @@ def handle_multi_card_click(idx):
             do_multi_draw()
         update_aifull_multi_ui()
     else:
-        # AI атакует -> вы защищаетесь?
         if defender==0:
             atk_card=hands[cur_attacker][0]
             log_multi.append(f"Вы пытаетесь отбиться {selected_card} от {atk_card}...")
@@ -776,6 +769,19 @@ def start_new_game():
         document["chosen_room"].textContent=rtxt
 
         switch_view("game-screen")
+
+
+
+############################################
+# 1) ИСПРАВЛЕНИЕ: связываем функции с window (чтобы onclick видел их)
+from browser import window
+
+window.open_screen = open_screen
+window.back_to_menu = back_to_menu
+window.start_new_game = start_new_game
+window.restart_aifull = restart_aifull
+window.restart_aifull_multi = restart_aifull_multi
+############################################
 
 </script>
 </body>
