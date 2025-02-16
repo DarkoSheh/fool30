@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Моя Игра (Brython) — Несколько ИИ (3–4 игроков), поле/лог зелёные, козырь-«карта»</title>
+  <title>Моя Игра (Brython) — Несколько ИИ (3–4 игроков), зелёное поле + козырь</title>
 
   <!-- Подключаем Brython -->
   <script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
@@ -15,7 +15,7 @@
       margin: 0; 
       padding: 0;
       font-family: Arial, sans-serif;
-      background: #eee; /* общий фон сайта */
+      background: #eee; 
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -28,9 +28,17 @@
       text-align: center;
       margin-bottom: 1rem;
     }
+    /* Главное меню теперь на весь экран */
+    #menu-screen {
+      background: white;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
     .container {
-      width: 600px;
-      max-width: 90%;
       background: white; 
       margin: 1rem;
       padding: 1rem;
@@ -50,34 +58,96 @@
       background: #32408f;
     }
 
-    /* Скрываем все экраны, кроме меню, по умолчанию */
+    /* Экраны (скрываем все, кроме menu) */
     #newgame-screen, #achievements-screen, #rules-screen,
-    #settings-screen, #game-screen, #aifull-screen,
-    #aifull-multi-screen {
+    #settings-screen, #game-screen, #aifull-screen, #aifull-multi-screen,
+    #profile-screen {
       display: none;
     }
 
-    /* Зелёное поле */
+    #newgame-screen {
+    width: 400px;       /* или 500px, как вам удобнее */
+    min-height: 500px;  /* если нужно задать высоту */
+    margin: 2rem auto;  /* чтобы центрировать */
+    box-sizing: border-box; /* на всякий случай */
+    }
+    
+    /* Зеленое игровое поле на весь экран */
     .game-field {
-      background: #2e7d32; /* зелёный фон */
+      background: #2e7d32;
       color: #fff;
       position: relative;
-      min-height: 600px;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 1rem;
+      box-sizing: border-box;
     }
 
-    /* Зелёный лог (где ходы/карты) */
+    /* Контейнер для козыря и стопки "бито" – по умолчанию в правом верхнем углу (только в игровых экранах) */
+    #aifull-screen .trump-discard-container,
+    #aifull-multi-screen .trump-discard-container {
+      display: flex;
+      gap: 1rem;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      left: auto;
+      z-index: 100;
+    }
+    /* Для остальных случаев */
+    .trump-discard-container {
+      display: flex;
+      gap: 1rem;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+    }
+    /* Козырная карта */
+    #trump-card, #trump-card-multi {
+      width: 60px;
+      height: 90px;
+      background: #fff;
+      color: #333;
+      border: 2px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    /* Стопка "бито" – размеры совпадают с козырной картой */
+    #discard-pile, #discard-pile-multi {
+      width: 60px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-back {
+      background: #333;
+      border: 2px solid #666;
+      border-radius: 10px;
+      width: 60px;
+      height: 90px;
+    }
+
+    /* Зеленый лог */
     .green-log {
-      background: #2e7d32;   /* тот же цвет */
+      background: #2e7d32;
       color: #fff;
       border: 1px solid #4caf50;
       padding: 1rem;
-      min-height: 150px; /* пример для видимости */
-      overflow-y: auto; /* если много текста, прокрутка */
+      min-height: 150px;
+      overflow-y: auto;
       margin-bottom: 1rem;
       border-radius: 5px;
     }
 
-    /* Карточный дизайн у выбора карт */
+    /* Карточный дизайн */
     .card-list {
       margin: 0.5rem 0;
       padding: 0;
@@ -105,7 +175,6 @@
       background: #f8f8f8;
     }
 
-    /* Правила */
     .rules-block h3 {
       margin-top: 0.5rem;
       margin-bottom: 0.3rem;
@@ -116,28 +185,11 @@
       line-height: 1.4;
     }
 
-    /* Фиксированный козырь (стилизован как карта) */
-    #trump-card {
-      position: fixed;
-      right: 30px;
-      top: 150px;
-
-      width: 60px;
-      height: 90px;
-
-      background: #fff;
-      color: #333;
-      border: 2px solid #333;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.3);
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
+    /* ДОПОЛНИТЕЛЬНО: общий стиль action-message */
+    .action-message {
       font-size: 1.2rem;
-
-      z-index: 999;
+      margin-bottom: 1rem;
+      color: yellow;
     }
   </style>
 </head>
@@ -147,16 +199,25 @@
   <h1>Главное меню моей игры</h1>
 </header>
 
-<!-- Козырь (в виде карты), фиксирован справа -->
-<div id="trump-card">?</div>
-
-<!-- Главное меню -->
+<!-- Главное меню (на весь экран) -->
 <div class="container" id="menu-screen">
   <h2>Главное меню</h2>
   <button onclick="open_screen('newgame')">Новая игра</button><br>
   <button onclick="open_screen('achievements')">Достижения</button><br>
   <button onclick="open_screen('rules')">Правила</button><br>
-  <button onclick="open_screen('settings')">Настройки</button>
+  <button onclick="open_screen('settings')">Настройки</button><br>
+  <!-- Новая кнопка: Личный кабинет -->
+  <button onclick="open_screen('profile')">Личный кабинет</button>
+</div>
+
+<!-- Экран "Личный кабинет" (profile) -->
+<div class="container" id="profile-screen">
+  <h2>Личный кабинет</h2>
+  <p>Введите ваше имя:</p>
+  <input type="text" id="player_name_input" value="Игрок" style="width:200px;" />
+  <br><br>
+  <button onclick="save_player_name()">Сохранить</button>
+  <button onclick="back_to_menu()">Назад в меню</button>
 </div>
 
 <!-- Экран "Новая игра" -->
@@ -284,12 +345,23 @@
   <button onclick="back_to_menu()">Вернуться в меню</button>
 </div>
 
-<!-- Экран "aifull-screen" — зелёное поле (.game-field) для 2 игроков -->
+<!-- Экран "aifull-screen" (2 игрока) -->
 <div class="container game-field" id="aifull-screen">
+  <!-- Контейнер для козыря и стопки "бито" в правом верхнем углу -->
+  <div class="trump-discard-container">
+    <div id="trump-card">?</div>
+    <div id="discard-pile" style="display:none;"></div>
+  </div>
   <h2>Полная партия с нейросетью (2 игрока)</h2>
   <p>Кто первый сбросит карты — тот выиграл!</p>
   <p>Текущий ход: <span id="current-turn"></span></p>
+
+  <!-- Новый блок для вывода сообщения: кто атакует/отбивается -->
+  <div id="aifull-action" class="action-message"></div>
+
   <div id="aifull-log" class="green-log"></div>
+  <div id="aifull-visual-cards" style="margin-bottom:1rem; display:flex; gap:1rem; flex-wrap:wrap;"></div>
+  
   <hr>
   <p><strong>Ваши карты:</strong></p>
   <ul class="card-list" id="user-cards-list"></ul>
@@ -297,13 +369,23 @@
   <button onclick="back_to_menu()">Выйти в меню</button>
 </div>
 
-<!-- Экран "aifull-multi-screen" (3..4 игроков) - тоже зелёное поле, 
-     лог тоже зелёный -->
+<!-- Экран "aifull-multi-screen" (3..4 игроков) -->
 <div class="container game-field" id="aifull-multi-screen">
-  <h2>Полная партия с несколькими ИИ (3..4 игроков)</h2>
+  <!-- Контейнер для козыря и стопки "бито" в правом верхнем углу -->
+  <div class="trump-discard-container">
+    <div id="trump-card-multi">?</div>
+    <div id="discard-pile-multi" style="display:none;"></div>
+  </div>
+  <h2>Полная партия с несколькими ИИ (3–4 игроков)</h2>
   <p>Кто первый сбросит карты — тот выиграл!<br>
      Текущий ход: <span id="multi-turn"></span></p>
+
+  <!-- Новый блок для вывода сообщения: кто атакует/отбивается -->
+  <div id="aifull-multi-action" class="action-message"></div>
+
   <div id="aifull-multi-log" class="green-log"></div>
+  <div id="aifull-multi-visual-cards" style="margin-bottom:1rem; display:flex; gap:1rem; flex-wrap:wrap;"></div>
+  
   <hr>
   <p><strong>Ваши карты:</strong></p>
   <ul class="card-list" id="user-multi-cards"></ul>
@@ -312,25 +394,34 @@
 </div>
 
 <script type="text/python">
-############################################
-#        Импорт из browser, random
-############################################
+########################################################
+#          Неизменённый/исходный код + патчи
+########################################################
 from browser import document, window
 import random
+from browser import timer
 
-############################################
-#         ИНИЦИАЛИЗАЦИЯ ЭКРАНОВ
-############################################
 def switch_view(show_id):
     screens = [
         "menu-screen","newgame-screen","achievements-screen","rules-screen",
-        "settings-screen","game-screen","aifull-screen","aifull-multi-screen"
+        "settings-screen","game-screen","aifull-screen","aifull-multi-screen",
+        "profile-screen"  # добавили экран личного кабинета
     ]
     for s in screens:
         document[s].style.display = "none"
     document[show_id].style.display = "block"
 
 def back_to_menu():
+    if "trump-card" in document:
+        document["trump-card"].style.display = "none"
+    if "trump-card-multi" in document:
+        document["trump-card-multi"].style.display = "none"
+    if "discard-pile" in document:
+        document["discard-pile"].style.display = "none"
+        document["discard-pile"].clear()
+    if "discard-pile-multi" in document:
+        document["discard-pile-multi"].style.display = "none"
+        document["discard-pile-multi"].clear()
     switch_view("menu-screen")
 
 def open_screen(name):
@@ -340,10 +431,6 @@ def on_game_type_change(ev):
     check_game_type()
 
 def check_game_type():
-    """
-    Если game_type=ai => показываем ai-count-block,
-    иначе multi-count-block.
-    """
     radio_list = document.select("[name='game_type']")
     chosen = "ai"
     for r in radio_list:
@@ -374,7 +461,8 @@ def can_defend(card_def, card_atk, trump_suit):
     rd, sd, jd = card_def
     ra, sa, ja = card_atk
     if jd:
-        if ja: return False
+        if ja:
+            return False
         return True
     if ja:
         return False
@@ -410,7 +498,34 @@ def create_deck(only_6plus, with_jokers):
         d.append(("Joker-4","JokerSuit",True))
     return d
 
-###################### 2 ИГРОКА ######################
+########################################################
+#  ***** Очередь показа сообщений и карт
+########################################################
+def display_card_visual(card, parent_id, label=""):
+    global _card_queue, _busy
+    _card_queue.append(('card', card, parent_id))
+    if not _busy:
+        _busy = True
+        timer.set_timeout(delayed_show_next, 2000)
+
+def clear_visual_cards(parent_id):
+    container = document[parent_id]
+    container.clear()
+
+def set_action_message(screen_id, txt):
+    pass
+
+def clear_action_message(screen_id):
+    document[screen_id+"-action"].innerHTML = ""
+
+player_name = "Игрок"
+def save_player_name():
+    global player_name
+    inp = document["player_name_input"].value
+    if inp.strip():
+        player_name = inp.strip()
+    back_to_menu()
+
 deck = []
 AI_cards = []
 user_cards = []
@@ -419,122 +534,173 @@ current_attacker = "AI"
 log_lines = []
 allow_user_click = False
 
+eliminated = []
+ranks_done = 0
+total_players_count = 0
+
+def determine_first_attacker_2p():
+    player_trumps = [card for card in user_cards if card[1] == trump_suit]
+    ai_trumps = [card for card in AI_cards if card[1] == trump_suit]
+    if player_trumps or ai_trumps:
+        player_min = min([rank_index(card[0]) for card in player_trumps]) if player_trumps else None
+        ai_min = min([rank_index(card[0]) for card in ai_trumps]) if ai_trumps else None
+        if player_min is not None and ai_min is not None:
+            if player_min < ai_min:
+                return "player"
+            else:
+                return "AI"
+        elif player_min is not None:
+            return "player"
+        elif ai_min is not None:
+            return "AI"
+    return "player"
+
+def game_over_2p(winner):
+    global user_cards, AI_cards, allow_user_click
+    if winner=="player":
+       patched_set_action_message("aifull", f"ПОБЕДИТЕЛЬ: {player_name.upper()}!")
+    else:
+       patched_set_action_message("aifull", "ПОБЕДИТЕЛЬ: СЕЛЕСТИЯ!")
+    user_cards = []
+    AI_cards = []
+    document["aifull-visual-cards"].clear()
+    allow_user_click = False
+
+def check_win_conditions_2p():
+    if len(user_cards) == 0:
+         game_over_2p("player")
+    elif len(AI_cards) == 0:
+         game_over_2p("AI")
+
 def start_aifull_game(only_6plus, with_jokers):
     global deck, AI_cards, user_cards, trump_suit, current_attacker, log_lines, allow_user_click
-    deck=create_deck(only_6plus, with_jokers)
+    deck = create_deck(only_6plus, with_jokers)
     random.shuffle(deck)
-
-    AI_cards=deck[:6]
-    user_cards=deck[6:12]
+    AI_cards = deck[:6]
+    user_cards = deck[6:12]
     del deck[:12]
-
-    suits=["♠","♥","♦","♣","⭐","🌙","⚜"]
+    suits = ["♠","♥","♦","♣","⭐","🌙","⚜"]
     trump_suit = random.choice(suits)
-
-    current_attacker="AI"
-    log_lines=[f"Начинаем партию (2 игрока). Козырь: {trump_suit}"]
-    allow_user_click=False
-
-    # Пишем козырь в #trump-card
+    current_attacker = determine_first_attacker_2p()
+    log_lines = [f"Начинаем партию (2 игрока)."]
+    allow_user_click = False
     document["trump-card"].innerHTML = f"<div style='font-size:1.5rem;'>{trump_suit}</div>"
+    document["trump-card"].style.display = "flex"
+    clear_visual_cards("aifull-visual-cards")
+    document["discard-pile"].clear()
+    document["discard-pile"].style.display = "none"
 
-    ai_attack()
+    # (1) "X ходит первым!"
+    if current_attacker == "player":
+        patched_set_action_message("aifull", f"{player_name} ходит первым!")
+        allow_user_click = True
+    else:
+        patched_set_action_message("aifull", "Селестия ходит первым!")
+        timer.set_timeout(ai_attack, 2000)
+
     switch_view("aifull-screen")
     update_aifull_ui()
 
 def ai_attack():
-    global AI_cards, log_lines, allow_user_click
+    global AI_cards, allow_user_click
     if len(AI_cards)==0:
         return
-    atk_card=AI_cards[0]
-    log_lines.append(f"(AI атакует) => {atk_card}")
-    allow_user_click=True
+    # (2) "Селестия атакует Игрок" + выкладка карты => сообщ. и карта одновременно
+    patched_set_action_message("aifull", "Селестия атакует Игрока!")
+    atk_card = AI_cards[0]
+    display_card_visual(atk_card, "aifull-visual-cards", "")
+    allow_user_click = True
 
 def update_aifull_ui():
-    aifull_log_div = document["aifull-log"]
-    aifull_log_div.innerHTML="<pre>"+"\n".join(log_lines)+"</pre>"
-
-    turn_text="AI" if current_attacker=="AI" else "Вы"
-    document["current-turn"].textContent=turn_text
-
-    ul=document["user-cards-list"]
+    document["aifull-log"].innerHTML = "<pre>" + "\n".join(log_lines) + "</pre>"
+    turn_text = "Селестия" if current_attacker=="AI" else player_name
+    document["current-turn"].textContent = turn_text
+    ul = document["user-cards-list"]
     ul.clear()
-    for i,c in enumerate(user_cards):
-        li=document.createElement("li")
+    for i, c in enumerate(user_cards):
+        li = document.createElement("li")
         li.classList.add("card-item")
-        li.innerHTML=str(c)
+        li.innerHTML = str(c)
         def on_click(ev, idx=i):
             handle_card_click(idx)
         li.bind("click", on_click)
         ul.appendChild(li)
-
-    if len(AI_cards)==0:
-        log_lines.append("AI сбросил все карты — AI выиграл!")
-        aifull_log_div.innerHTML="<pre>"+"\n".join(log_lines)+"</pre>"
-        return
-    if len(user_cards)==0:
-        log_lines.append("Вы сбросили все карты — вы победили!")
-        aifull_log_div.innerHTML="<pre>"+"\n".join(log_lines)+"</pre>"
-        return
+    check_win_conditions_2p()
 
 def handle_card_click(idx):
-    global deck, AI_cards, user_cards, trump_suit, current_attacker, log_lines, allow_user_click
+    global deck, AI_cards, user_cards, trump_suit, current_attacker, allow_user_click
     if not allow_user_click:
         return
     if idx<0 or idx>=len(user_cards):
         return
-
-    c=user_cards[idx]
+    c = user_cards[idx]
     if current_attacker=="AI":
-        atk_card=AI_cards[0]
-        log_lines.append(f"Вы отбиваетесь {c} от {atk_card}...")
-        if can_defend(c,atk_card,trump_suit):
-            log_lines.append("Успешная защита!")
+        # (3) "Игрок отбивается..."
+        patched_clear_action("aifull")
+        patched_set_action_message("aifull", f"{player_name} отбивается...")
+        atk_card = AI_cards[0]
+        display_card_visual(c, "aifull-visual-cards", "")
+        # проверяем защиту
+        if can_defend(c, atk_card, trump_suit):
+            # (4) "Игрок отбился!", убираем все карты
+            patched_set_action_message("aifull", f"{player_name} отбился!")
+            discard_cards_bito("aifull",[c,atk_card])
             AI_cards.pop(0)
             user_cards.pop(idx)
-            current_attacker="USER"
+            current_attacker="player"
+            # след. атака "Игрок атакует Селестию"
+            patched_set_action_message("aifull", f"{player_name} атакует Селестию!")
         else:
-            log_lines.append("Не отбились, вы берёте карту AI.")
+            # (5) "Игрок не отбился, берём карты"
+            patched_set_action_message("aifull", f"{player_name} не отбился, берём карты")
+            document["aifull-visual-cards"].clear()
             user_cards.append(atk_card)
             AI_cards.pop(0)
+            # далее "ход переходит к..."
+            patched_set_action_message("aifull", f"Ход переходит к Селестии. Селестия атакует Игрока!")
         allow_user_click=False
-
+        # добираем
+        AI_cards=draw_until_6(AI_cards,deck)
+        user_cards=draw_until_6(user_cards,deck)
         if current_attacker=="AI":
-            AI_cards=draw_until_6(AI_cards,deck)
-            user_cards=draw_until_6(user_cards,deck)
-            if len(AI_cards)>0:
-                ai_attack()
+            timer.set_timeout(ai_attack,2000)
         else:
-            user_cards=draw_until_6(user_cards,deck)
-            AI_cards=draw_until_6(AI_cards,deck)
             allow_user_click=True
-            log_lines.append("Теперь ваш ход, атакуйте.")
         update_aifull_ui()
     else:
-        log_lines.append(f"Вы атакуете {c}...")
+        # (2) "Игрок атакует Селестию!"
+        patched_clear_action("aifull")
+        patched_set_action_message("aifull", f"{player_name} атакует Селестию!")
+        display_card_visual(c,"aifull-visual-cards","")
         user_cards.pop(idx)
         def_idx=None
-        for i,cardAi in enumerate(AI_cards):
-            if can_defend(cardAi,c,trump_suit):
+        for i,aicard in enumerate(AI_cards):
+            if can_defend(aicard,c,trump_suit):
                 def_idx=i
                 break
         if def_idx is not None:
+            # (3) "Селестия отбивается..."
             def_card=AI_cards[def_idx]
-            log_lines.append(f"AI отбивается {def_card}!")
+            patched_set_action_message("aifull","Селестия отбивается...")
+            display_card_visual(def_card,"aifull-visual-cards","")
+            # (4) "Селестия отбился!"
+            patched_set_action_message("aifull","Селестия отбился!")
+            discard_cards_bito("aifull",[c,def_card])
             AI_cards.pop(def_idx)
             current_attacker="AI"
             allow_user_click=False
+            # (2) "Селестия атакует..."
+            patched_set_action_message("aifull","Селестия атакует Игрока!")
+            timer.set_timeout(ai_attack,2000)
         else:
-            log_lines.append("AI не отбился и берёт вашу карту.")
+            # (5) "Селестия не отбился, берём карты"
+            patched_set_action_message("aifull","Селестия не отбился, берёт карты")
+            document["aifull-visual-cards"].clear()
             AI_cards.append(c)
-        if current_attacker=="AI":
-            AI_cards=draw_until_6(AI_cards,deck)
-            user_cards=draw_until_6(user_cards,deck)
-            if len(AI_cards)>0:
-                ai_attack()
-        else:
-            user_cards=draw_until_6(user_cards,deck)
-            AI_cards=draw_until_6(AI_cards,deck)
+            # ход переходит...
+            patched_set_action_message("aifull","Ход переходит к Игроку. Игрок атакует Селестию!")
+        AI_cards=draw_until_6(AI_cards,deck)
+        user_cards=draw_until_6(user_cards,deck)
         update_aifull_ui()
 
 def restart_aifull():
@@ -542,7 +708,9 @@ def restart_aifull():
     sixplus_checked=document["cb_6plus"].checked
     start_aifull_game(sixplus_checked,jokers_checked)
 
-################## 3..4 ИГРОКОВ (aifull-multi) ##################
+#########################################
+# МУЛЬТИ
+#########################################
 n_players=3
 hands=[]
 deck_multi=[]
@@ -551,38 +719,114 @@ cur_attacker=0
 log_multi=[]
 allow_click_multi=False
 
-def start_aifull_multi_game(only_6plus, with_jokers, total_players):
-    global n_players, hands, deck_multi, trump_multi, cur_attacker, log_multi, allow_click_multi
+def determine_first_attacker_multi():
+    best=None
+    best_idx=None
+    for i,hand in enumerate(hands):
+        if eliminated[i]:
+            continue
+        trump_cards=[c for c in hand if c[1]==trump_multi]
+        if trump_cards:
+            rmins=[rank_index(x[0]) for x in trump_cards]
+            m=min(rmins)
+        else:
+            m=999
+        if best is None or m<best:
+            best=m
+            best_idx=i
+    if best_idx is None or best==999:
+        return 0
+    return best_idx
+
+def game_over_multi(winner,winner_idx):
+    global allow_click_multi,hands,ranks_done
+    place=ranks_done+1
+    ranks_done+=1
+    eliminated[winner_idx]=True
+    if winner=="player":
+        if place==1:
+            patched_set_action_message("aifull-multi",f"ПОБЕДИТЕЛЬ: {player_name.upper()} (1 место)!")
+            for i in range(len(hands)):
+                hands[i]=[]
+            allow_click_multi=False
+        else:
+            patched_set_action_message("aifull-multi",f"{player_name} занял {place} место!")
+            for i in range(len(hands)):
+                hands[i]=[]
+            allow_click_multi=False
+    else:
+        nm=get_ai_name(winner_idx)
+        patched_set_action_message("aifull-multi",f"{nm} занял {place} место!")
+        hands[winner_idx]=[]
+        if place==total_players_count-0:
+            allow_click_multi=False
+        else:
+            pass
+    document["aifull-multi-visual-cards"].clear()
+
+def check_win_conditions_multi():
+    global n_players,ranks_done
+    arr=[i for i,h in enumerate(hands) if len(h)>0 and not eliminated[i]]
+    if len(arr)==1:
+        last_idx=arr[0]
+        place=ranks_done+1
+        ranks_done+=1
+        if last_idx==0:
+            patched_set_action_message("aifull-multi",f"{player_name} остался последним, он проиграл!")
+            for i in range(n_players):
+                hands[i]=[]
+            allow_click_multi=False
+        else:
+            nm=get_ai_name(last_idx)
+            patched_set_action_message("aifull-multi",f"{nm} проиграл последним!")
+            for i in range(n_players):
+                hands[i]=[]
+            allow_click_multi=False
+
+def start_aifull_multi(only_6plus,with_jokers,total):
+    start_aifull_multi_game(only_6plus,with_jokers,total)
+
+def start_aifull_multi_game(only_6plus,with_jokers,total_players):
+    global n_players,hands,deck_multi,trump_multi,cur_attacker,log_multi,allow_click_multi
+    global eliminated,ranks_done,total_players_count
     n_players=total_players
-    deck_multi=create_deck(only_6plus, with_jokers)
+    total_players_count=n_players
+    eliminated=[False]*n_players
+    ranks_done=0
+    deck_multi=create_deck(only_6plus,with_jokers)
     random.shuffle(deck_multi)
-
     hands=[]
-    offset=0
+    off=0
     for i in range(n_players):
-        h=deck_multi[offset:offset+6]
-        offset+=6
+        h=deck_multi[off:off+6]
+        off+=6
         hands.append(h)
-    deck_multi=deck_multi[offset:]
-
+    deck_multi=deck_multi[off:]
     suits=["♠","♥","♦","♣","⭐","🌙","⚜"]
     trump_multi=random.choice(suits)
-    document["trump-card"].innerHTML = f"<div style='font-size:1.5rem;'>{trump_multi}</div>"
+    cur_attacker=determine_first_attacker_multi()
+    log_multi=[f"Начинаем (1чел + {n_players-1} ИИ)."]
+    document["trump-card-multi"].innerHTML=f"<div style='font-size:1.5rem;'>{trump_multi}</div>"
+    document["trump-card-multi"].style.display="flex"
+    clear_visual_cards("aifull-multi-visual-cards")
+    document["discard-pile-multi"].clear()
+    document["discard-pile-multi"].style.display="none"
+    allow_click_multi=(cur_attacker==0)
 
-    cur_attacker=1
-    log_multi=[f"Начинаем (1чел + {n_players-1} ИИ). Козырь: {trump_multi}"]
-    allow_click_multi=False
-
-    ai_multi_attack(cur_attacker)
+    # (1) "X ходит первым!"
+    if cur_attacker==0:
+        patched_set_action_message("aifull-multi", f"{player_name} ходит первым!")
+    else:
+        patched_set_action_message("aifull-multi", f"{get_ai_name(cur_attacker)} ходит первым!")
+        timer.set_timeout(lambda: ai_multi_attack(cur_attacker),2000)
     update_aifull_multi_ui()
     switch_view("aifull-multi-screen")
 
 def update_aifull_multi_ui():
-    global log_multi, cur_attacker, hands
+    global log_multi,cur_attacker,hands
     document["aifull-multi-log"].innerHTML="<pre>"+"\n".join(log_multi)+"</pre>"
-    turn_text=f"AI[{cur_attacker}]" if cur_attacker!=0 else "Вы"
+    turn_text=(f"{get_ai_name(cur_attacker)}" if cur_attacker!=0 else player_name)
     document["multi-turn"].textContent=turn_text
-
     ul=document["user-multi-cards"]
     ul.clear()
     for i,c in enumerate(hands[0]):
@@ -593,78 +837,74 @@ def update_aifull_multi_ui():
             handle_multi_card_click(idx)
         li.bind("click", on_click)
         ul.appendChild(li)
-
-    for i in range(n_players):
-        if len(hands[i])==0:
-            if i==0:
-                log_multi.append("Вы сбросили все карты — Победа!")
-            else:
-                log_multi.append(f"AI[{i}] сбросил все карты — Он выиграл!")
-            log_multi.append("Игра завершена.")
-            document["aifull-multi-log"].innerHTML="<pre>"+"\n".join(log_multi)+"</pre>"
-            return
+    check_win_conditions_multi()
 
 def handle_multi_card_click(idx):
-    global allow_click_multi,hands,cur_attacker,deck_multi,log_multi,trump_multi,n_players
+    global allow_click_multi,hands,cur_attacker,deck_multi,log_multi,trump_multi,n_players,eliminated
     if not allow_click_multi:return
     if idx<0 or idx>=len(hands[0]):return
-
-    selected_card=hands[0][idx]
+    patched_clear_action("aifull-multi")
     defender=(cur_attacker+1)%n_players
-
-    if cur_attacker==0:
-        log_multi.append(f"Вы атакуете {selected_card}...")
-        hands[0].pop(idx)
-        def_card=None
-        def_idx=None
-        for i,c in enumerate(hands[defender]):
-            if can_defend(c,selected_card,trump_multi):
-                def_card=c
-                def_idx=i
-                break
-        if def_card:
-            log_multi.append(f"AI[{defender}] отбивается {def_card}. Успешно!")
-            hands[defender].pop(def_idx)
-            cur_attacker=defender
-            allow_click_multi=False
-            do_multi_draw()
-            ai_multi_attack(cur_attacker)
-        else:
-            log_multi.append(f"AI[{defender}] НЕ отбился, берёт вашу карту.")
-            hands[defender].append(selected_card)
-            do_multi_draw()
-        update_aifull_multi_ui()
+    while eliminated[defender] and defender!=cur_attacker:
+        defender=(defender+1)%n_players
+    selected_card=hands[0][idx]
+    # (2) "Игрок атакует ИИ"
+    patched_set_action_message("aifull-multi",f"{player_name} атакует {get_ai_name(defender)}!")
+    display_card_visual(selected_card,"aifull-multi-visual-cards","")
+    hands[0].pop(idx)
+    def_card=None
+    def_idx=None
+    for i,c in enumerate(hands[defender]):
+        if can_defend(c,selected_card,trump_multi):
+            def_card=c
+            def_idx=i
+            break
+    if def_card:
+        # (3) "ИИ отбивается..."
+        display_card_visual(def_card,"aifull-multi-visual-cards","")
+        log_multi.append(f"{get_ai_name(defender)} отбился!")
+        cur_attacker=defender
+        hands[defender].pop(def_idx)
+        allow_click_multi=False
+        # (4) "ИИ отбился!", убираем все карты -> бито
+        patched_set_action_message("aifull-multi",f"{get_ai_name(defender)} отбился!")
+        discard_cards_bito("aifull-multi",[selected_card,def_card])
+        do_multi_draw()
+        # далее "X атакует..."
+        patched_set_action_message("aifull-multi", f"{get_ai_name(cur_attacker)} атакует!")
+        timer.set_timeout(lambda: ai_multi_attack(cur_attacker),2000)
     else:
-        if defender==0:
-            atk_card=hands[cur_attacker][0]
-            log_multi.append(f"Вы пытаетесь отбиться {selected_card} от {atk_card}...")
-            if can_defend(selected_card,atk_card,trump_multi):
-                log_multi.append("Успешно отбились!")
-                hands[cur_attacker].pop(0)
-                hands[0].pop(idx)
-                cur_attacker=0
-                allow_click_multi=True
-                log_multi.append("Теперь ваш ход (атакуйте).")
-            else:
-                log_multi.append("Не отбились, вы берёте карту AI.")
-                hands[0].append(atk_card)
-                hands[cur_attacker].pop(0)
-                allow_click_multi=False
-            do_multi_draw()
-            if cur_attacker!=0:
-                ai_multi_attack(cur_attacker)
-            update_aifull_multi_ui()
+        # (5) "ИИ не отбился, берем карты"
+        log_multi.append(f"{get_ai_name(defender)} не отбился, берёт карту.")
+        patched_set_action_message("aifull-multi", f"{get_ai_name(defender)} не отбился, берёт карты")
+        document["aifull-multi-visual-cards"].clear()
+        hands[defender].append(selected_card)
+        do_multi_draw()
+        # "ход переходит к..."
+        nxt=(defender+1)%n_players
+        while eliminated[nxt] and nxt!=defender:
+            nxt=(nxt+1)%n_players
+        cur_attacker=nxt
+        if cur_attacker==0:
+            allow_click_multi=True
+            log_multi.append(f"{player_name} ходит (после неудачной защиты {get_ai_name(defender)}).")
+            patched_set_action_message("aifull-multi", f"Ход переходит к {player_name}. {player_name} атакует!")
         else:
-            # AI vs AI
-            pass
+            patched_set_action_message("aifull-multi", f"Ход переходит к {get_ai_name(cur_attacker)}. {get_ai_name(cur_attacker)} атакует!")
+            timer.set_timeout(lambda: ai_multi_attack(cur_attacker),2000)
+    update_aifull_multi_ui()
 
 def ai_multi_attack(att_idx):
-    global hands, deck_multi, log_multi, allow_click_multi, cur_attacker, n_players, trump_multi
+    global hands,deck_multi,log_multi,allow_click_multi,cur_attacker,n_players,trump_multi,eliminated
+    if eliminated[att_idx]:return
     if len(hands[att_idx])==0:return
-    atk_card=hands[att_idx][0]
     df=(att_idx+1)%n_players
-    log_multi.append(f"AI[{att_idx}] атакует {atk_card} -> defender= player[{df}]")
-
+    while eliminated[df] and df!=att_idx:
+        df=(df+1)%n_players
+    # (2) "ИИ[X] атакует ИИ[Y]"
+    patched_set_action_message("aifull-multi", f"{get_ai_name(att_idx)} атакует {get_ai_name(df)}!")
+    atk_card=hands[att_idx][0]
+    display_card_visual(atk_card,"aifull-multi-visual-cards","")
     if df==0:
         allow_click_multi=True
     else:
@@ -674,34 +914,51 @@ def ai_multi_attack(att_idx):
                 def_i=i
                 break
         if def_i is not None:
+            # (3) "ИИ[df] отбивается..."
             def_card=hands[df][def_i]
-            log_multi.append(f"AI[{df}] отбивается {def_card} — успешно!")
+            display_card_visual(def_card,"aifull-multi-visual-cards","")
+            log_multi.append(f"{get_ai_name(df)} отбился!")
+            cur_attacker=df
             hands[df].pop(def_i)
             hands[att_idx].pop(0)
-            cur_attacker=df
+            # (4) "ИИ[df] отбился!"
+            patched_set_action_message("aifull-multi", f"{get_ai_name(df)} отбился!")
+            discard_cards_bito("aifull-multi",[atk_card,def_card])
         else:
-            log_multi.append(f"AI[{df}] не отбился, берёт {atk_card}")
+            # (5) "ИИ[df] не отбился, берёт карты"
+            log_multi.append(f"{get_ai_name(df)} не отбился, берёт карту.")
+            patched_set_action_message("aifull-multi",f"{get_ai_name(df)} не отбился, берёт карты")
+            document["aifull-multi-visual-cards"].clear()
             hands[df].append(atk_card)
             hands[att_idx].pop(0)
+            nxt=(df+1)%n_players
+            while eliminated[nxt] and nxt!=df:
+                nxt=(nxt+1)%n_players
+            cur_attacker=nxt
         do_multi_draw()
         if cur_attacker!=df:
-            if len(hands[att_idx])>0:
-                ai_multi_attack(att_idx)
+            if len(hands[cur_attacker])>0 and not eliminated[cur_attacker]:
+                # "ход переходит..."
+                patched_set_action_message("aifull-multi", f"Ход переходит к {get_ai_name(cur_attacker)}. {get_ai_name(cur_attacker)} атакует!")
+                timer.set_timeout(lambda: ai_multi_attack(cur_attacker),2000)
         else:
             if cur_attacker==0:
                 allow_click_multi=True
-                log_multi.append("Теперь ваш ход (вы атакующий).")
+                log_multi.append("Теперь ваш ход.")
+                patched_set_action_message("aifull-multi", f"Ход переходит к {player_name}. Ваш ход!")
             else:
-                ai_multi_attack(cur_attacker)
+                patched_set_action_message("aifull-multi",f"Ход переходит к {get_ai_name(cur_attacker)}. {get_ai_name(cur_attacker)} атакует {get_ai_name((cur_attacker+1)%n_players)}!")
+                timer.set_timeout(lambda: ai_multi_attack(cur_attacker),2000)
+    update_aifull_multi_ui()
 
 def do_multi_draw():
-    global hands, deck_multi, cur_attacker, n_players
+    global hands,deck_multi,cur_attacker,n_players,eliminated
     order=[cur_attacker]
     for i in range(n_players):
-        if i!=cur_attacker:
+        if i!=cur_attacker and not eliminated[i]:
             order.append(i)
     for idx in order:
-        hands[idx]=draw_until_6(hands[idx], deck_multi)
+        hands[idx]=draw_until_6(hands[idx],deck_multi)
 
 def restart_aifull_multi():
     jokers_checked=document["cb_jokers"].checked
@@ -711,11 +968,10 @@ def restart_aifull_multi():
         ai_num=int(ai_str)
     except:
         ai_num=3
-    if ai_num<3: ai_num=3
-    if ai_num>4: ai_num=4
-    start_aifull_multi_game(sixplus_checked, jokers_checked, ai_num)
+    if ai_num<3:ai_num=3
+    if ai_num>4:ai_num=4
+    start_aifull_multi_game(sixplus_checked,jokers_checked,ai_num)
 
-############################ ЗАПУСК NEW GAME ###########################
 def start_new_game():
     mode_value=document["select_mode"].value
     jokers_checked=document["cb_jokers"].checked
@@ -734,9 +990,8 @@ def start_new_game():
             ai_count=int(ai_count_str)
         except:
             ai_count=2
-        if ai_count<2: ai_count=2
-        if ai_count>4: ai_count=4
-
+        if ai_count<2:ai_count=2
+        if ai_count>4:ai_count=4
         if ai_count==2:
             start_aifull_game(sixplus_checked,jokers_checked)
         else:
@@ -747,16 +1002,14 @@ def start_new_game():
             multi_count=int(multi_count_str)
         except:
             multi_count=4
-        if multi_count<2: multi_count=2
-        if multi_count>10: multi_count=10
-
+        if multi_count<2:multi_count=2
+        if multi_count>10:multi_count=10
         rlist=document.select("[name='room_type']")
         rt="link"
         for rr in rlist:
             if rr.checked:
                 rt=rr.value
                 break
-
         document["chosen_mode"].textContent=mode_value
         document["chosen_jokers"].textContent="Да" if jokers_checked else "Нет"
         document["chosen_6plus"].textContent="Да" if sixplus_checked else "Нет"
@@ -770,19 +1023,93 @@ def start_new_game():
 
         switch_view("game-screen")
 
+########################################################
+# Очередь для показа карт/сообщений
+########################################################
+_card_queue=[]
+_busy=False
 
+def delayed_show_next():
+    global _card_queue,_busy
+    if not _card_queue:
+        _busy=False
+        return
+    _busy=True
+    item=_card_queue.pop(0)
+    kind=item[0]
+    if kind=='card':
+        card, parent_id=item[1],item[2]
+        cont=document[parent_id]
+        new_div=document.createElement("div")
+        new_div.classList.add("card-item")
+        new_div.style.display="inline-block"
+        rank,suit,jk=card
+        card_text="Joker" if jk else f"{rank}{suit}"
+        new_div.innerHTML=card_text
+        cont.appendChild(new_div)
+    elif kind=='message':
+        scr, txt=item[1], item[2]
+        _old_set_action_message(scr,txt)
+    timer.set_timeout(delayed_show_next,2000)
 
-############################################
-# 1) ИСПРАВЛЕНИЕ: связываем функции с window (чтобы onclick видел их)
+def _old_set_action_message(screen_id, txt):
+    if screen_id=="aifull":
+        txt=txt.replace("ИИ","Селестия")
+    txt=txt.replace("AI[1]","Селестия").replace("AI[2]","Люмин").replace("AI[3]","Итер")
+    txt=txt.replace("AI[0]", player_name).replace("ИИ[0]", player_name)
+    txt=txt.replace("Игрок",player_name)
+    document[screen_id+"-action"].innerHTML=txt
+
+def patched_set_action_message(screen_id, txt):
+    _old_set_action_message(screen_id, txt) 
+    _card_queue.append(('message',screen_id,txt))
+    global _busy
+    if not _busy:
+        _busy=True
+        timer.set_timeout(delayed_show_next,2000)
+
+def patched_clear_action(screen_id):
+    document[screen_id+"-action"].innerHTML=""
+
+set_action_message=patched_set_action_message
+
+def discard_cards_bito(screen_id, cards):
+    if screen_id=="aifull":
+        pile_id="discard-pile"
+        field_id="aifull-visual-cards"
+    else:
+        pile_id="discard-pile-multi"
+        field_id="aifull-multi-visual-cards"
+    if pile_id in document:
+        document[field_id].clear()
+        pile=document[pile_id]
+        pile.clear()
+        pile.style.display="flex"
+        new_div=document.createElement("div")
+        new_div.classList.add("card-back")
+        pile.appendChild(new_div)
+
+def get_ai_name(ai_idx):
+    if ai_idx==1:return "Селестия"
+    elif ai_idx==2:return "Люмин"
+    elif ai_idx==3:return "Итер"
+    return f"AI[{ai_idx}]"
+
 from browser import window
+window.open_screen=open_screen
+window.back_to_menu=back_to_menu
+window.start_new_game=start_new_game
+window.restart_aifull=restart_aifull
+window.restart_aifull_multi=restart_aifull_multi
+window.save_player_name=save_player_name
 
-window.open_screen = open_screen
-window.back_to_menu = back_to_menu
-window.start_new_game = start_new_game
-window.restart_aifull = restart_aifull
-window.restart_aifull_multi = restart_aifull_multi
-############################################
+def _hide_text_logs():
+    if "aifull-log" in document:
+        document["aifull-log"].style.display="none"
+    if "aifull-multi-log" in document:
+        document["aifull-multi-log"].style.display="none"
 
+_hide_text_logs()
 </script>
 </body>
 </html>
